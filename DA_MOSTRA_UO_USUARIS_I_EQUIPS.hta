@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MOSTRA UO USUARIS I EQUIPS (distinguished name) </title>
+ 
+    <HTA:APPLICATION
+        APPLICATIONNAME = "MOSTRA UO USUARIS (distinguished name) "
+		id="MOSTRA UO USUARIS (distinguished name) "
+		name="MOSTRA UO USUARIS (distinguished name) "
+    />
+	
+	<script language="vbscript">
+	On Error Resume Next
+	
+	
+
+	'CONSTANTS PER TRADUCCIO DE NOMS'
+	Const ADS_NAME_INITTYPE_GC = 3
+	Const ADS_NAME_TYPE_NT4 = 3
+	Const ADS_NAME_TYPE_1779 = 1
+
+	
+	Dim objFSO, objFile, strFileName
+
+	
+'-------------------------------------'
+'INICI BOTO EXECUTA'
+	Sub Executa
+
+
+			strText = txt_entrada.Value
+    		arrLines = Split(strText, vbCrLf)
+    		For Each strLine in arrLines
+
+
+
+
+
+		'CHECK DE LOCALITZAR OU DUSUARI O EQUIP'
+		
+		if usuari.checked = true then	'SI check button radio es USUARI'
+
+
+				
+				Set objSystemInfo = CreateObject("ADSystemInfo") 
+				strDomain = objSystemInfo.DomainShortName
+				strUser = strLine
+				resultat = resultat & GetUserDN(strUser,strDomain) & vbCRLF
+				txt_sortida.value = resultat
+
+
+		end if
+
+		if equip.checked = true then	'SI check button radio es EQUIP'
+
+				
+				Set objSystemInfo = CreateObject("ADSystemInfo") 
+				strDomain = objSystemInfo.DomainShortName
+				strComputer = strLine
+				On Error Resume Next
+				'Set objComputer = GetObject("WinNT://" & strDomain & "/" & strComputer & ",computer")'
+
+				DNequip = resultat & getComputerDN(strComputer,strDomain) & vbCRLF
+				'comprova si existeix equip'
+				If (Err.Number = 0) Then
+				   resultat =  resultat & DN & getComputerDN(strComputer,strDomain) & vbCRLF
+				Else
+				 
+				   
+				   resultat = resultat & strComputer & " - no existeix a Directori Actiu" & vbCRLF
+				End If
+
+				
+				txt_sortida.value = resultat
+			
+
+		end if 
+
+Next
+
+
+
+		'CRIDA DE FUNCIO NETEJA FITXER TXT PER MOSTRAR DE NOU RESULTATS EN txt_sortida'
+
+End Sub
+'FI BOTO EXECUTA'
+'-------------------------------------'
+
+
+'************************************'
+' APARTAT PER FUNCIONS DE LSCRIPT'
+'************************************'
+
+'FUNCIO NETEJA FITXER'
+function neteja_fitxer
+	strFileName = "temp_executa.txt"
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+	Set objFile = objFSO.OpenTextFile(strFileName, 2, true)
+	Set objShell = CreateObject("WScript.Shell")
+	objFile.Write ""
+end function
+'-------------------------------------'
+
+'FUNCIO OBTENIR DISTINGUESHED NAME USUARI'
+function GetUserDN(byval strUserName,byval strDomain)
+	set objTrans = CreateObject("NameTranslate")
+	objTrans.Init 1, strDomain
+	objTrans.Set 3, strDomain & "\" & strUserName 
+	strUserDN = objTrans.Get(1) 
+	GetUserDN = strUserDN
+end function
+'-------------------------------------'
+
+'FUNCIO OBTENIR DISTINGUESHED NAME EQUIP'
+function getComputerDN(byval strComputer,byval strDomain)
+	' Function to get the distinguished name of a computer'
+	' from the NETBIOS name of the computer (strcomputer)'
+	' and the NETBIOS name of the domain (strDomain) using'
+	' name translate'
+
+	Set objTrans = CreateObject("NameTranslate")
+	' Initialize name translate using global catalog'
+	objTrans.Init ADS_NAME_INITTYPE_GC, ""
+	' Input computer name (NT Format)'
+	objTrans.Set ADS_NAME_TYPE_NT4, strDomain & "\" & strComputer & "$"
+	' Get Distinguished Name.'
+	getComputerDN = objTrans.Get(ADS_NAME_TYPE_1779)
+end function
+'-------------------------------------'
+
+
+	</script>
+	
+	</head>
+ 
+<body>
+    <h1>MOSTRA UO USUARIS I EQUIPS (distinguished name) </h1>
+    <p><i><b>* Important no deixar cap espai en blanc.</i></b></p>
+	
+	<textarea name="txt_entrada" rows=10 cols="50" ></textarea>
+	<br>
+	<input type="radio" name="radio" id="usuari" value="Usuari" checked><b>Usuari </b>
+	<input type="radio" name="radio" id="equip" value="equip"><b> Equip </b>
+	<br>
+	<br>
+	
+
+
+    
+
+    <!-- CAIXA TEXT RESULTAT -->
+    <input type="button" value="Executa" onclick="Executa">
+    <br>
+    <br>
+    <textarea name="txt_sortida" rows=20  cols=110></textarea>
+
+
+
+	
+</body>
+ 
+</html>
